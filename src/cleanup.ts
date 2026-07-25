@@ -3,6 +3,7 @@ import { fetchChannelMessages, deleteMessage } from "./discord.js";
 import { decide } from "./classifiers/index.js";
 import { getAllWatchedChannels } from "./watchlist.js";
 import { isAltairMessage, type AltairIdentity } from "./altair.js";
+import { fetchDoneInvasionNodes } from "./warframe.js";
 
 export interface CleanupResult {
   scanned: number;
@@ -27,6 +28,8 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
     webhookName: env.ALTAIR_WEBHOOK_NAME || "Altair",
   };
   const graceSeconds = Number(env.STALE_GRACE_SECONDS || "120");
+  // Fetched once per run; null if the worldstate API is unreachable.
+  const doneInvasionNodes = await fetchDoneInvasionNodes(env.WORLDSTATE_PLATFORM || "pc");
 
   const result: CleanupResult = {
     scanned: 0,
@@ -59,7 +62,7 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
       if (msg.pinned) continue; // never touch pinned (e.g. Dynamic auto-updaters)
       result.altairMessages++;
 
-      const { matched, stale } = decide(msg, now, graceSeconds);
+      const { matched, stale } = decide(msg, now, { graceSeconds, doneInvasionNodes });
       if (!stale) continue;
       result.stale++;
 

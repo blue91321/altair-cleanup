@@ -43,7 +43,13 @@
       "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -X POST https://altair-cleanup.blakerobinsonsinger.workers.dev -H 'Content-Type: application/json' -H 'X-Signature-Ed25519: deadbeef' -H 'X-Signature-Timestamp: 123' -d '{\"type\":1}')",
       "Bash(git -c user.name=blue91321 -c user.email=blakerobinsonsinger1@gmail.com commit -m 'Set Discord public key + app id as vars \\(fix interactions endpoint verification\\) *)",
       "Bash(git ls-remote *)",
-      "Bash(git -c user.name=blue91321 -c user.email=blakerobinsonsinger1@gmail.com commit -m 'Report /cleanup errors instead of hanging on '\\\\''thinking'\\\\'' *)"
+      "Bash(git -c user.name=blue91321 -c user.email=blakerobinsonsinger1@gmail.com commit -m 'Report /cleanup errors instead of hanging on '\\\\''thinking'\\\\'' *)",
+      "WebFetch(domain:api.warframestat.us)",
+      "WebFetch(domain:content.warframe.com)",
+      "Bash(curl -s --max-time 25 -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\)\" \"https://content.warframe.com/dynamic/worldState.php\")",
+      "Bash(node -e 'let d=\"\";process.stdin.on\\(\"data\",c=>d+=c\\).on\\(\"end\",\\(\\)=>{try{const w=JSON.parse\\(d\\);const inv=w.Invasions||[];console.log\\(\"invasion count:\",inv.length\\);const e=inv[0];console.log\\(\"keys:\",Object.keys\\(e\\).join\\(\", \"\\)\\);console.log\\(\"Node:\",e.Node,\"| Count:\",e.Count,\"| Goal:\",e.Goal,\"| Completed:\",e.Completed\\);}catch\\(err\\){console.log\\(\"err:\",err.message,\"| body start:\",d.slice\\(0,200\\)\\);}}\\)')",
+      "Bash(git -c user.name=blue91321 -c user.email=blakerobinsonsinger1@gmail.com commit -m 'Add invasion classifier using worldstate API *)",
+      "Bash(gh pr create --base main --head invasion-classifier --title 'Add invasion classifier \\(worldstate API\\)' --body ' *)"
     ]
   }
 }

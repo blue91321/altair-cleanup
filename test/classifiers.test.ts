@@ -19,17 +19,17 @@ function msg(fields: { name: string; value: string }[], content = ""): DiscordMe
 
 describe("overdue-timestamp rule", () => {
   it("keeps a message whose only timestamp is in the future", () => {
-    const d = decide(msg([{ name: "Expires", value: `<t:${NOW + 3600}:R>` }]), NOW, GRACE);
+    const d = decide(msg([{ name: "Expires", value: `<t:${NOW + 3600}:R>` }]), NOW, { graceSeconds: GRACE, doneInvasionNodes: [] });
     expect(d.stale).toBe(false);
   });
 
   it("keeps a timestamp that is past but within the grace window", () => {
-    const d = decide(msg([{ name: "Expires", value: `<t:${NOW - 60}:R>` }]), NOW, GRACE); // 1 min ago
+    const d = decide(msg([{ name: "Expires", value: `<t:${NOW - 60}:R>` }]), NOW, { graceSeconds: GRACE, doneInvasionNodes: [] }); // 1 min ago
     expect(d.stale).toBe(false);
   });
 
   it("deletes once a timestamp is more than the grace window overdue", () => {
-    const d = decide(msg([{ name: "Expires", value: `<t:${NOW - 121}:R>` }]), NOW, GRACE);
+    const d = decide(msg([{ name: "Expires", value: `<t:${NOW - 121}:R>` }]), NOW, { graceSeconds: GRACE, doneInvasionNodes: [] });
     expect(d.matched).toBe("overdue-timestamp");
     expect(d.stale).toBe(true);
   });
@@ -41,19 +41,19 @@ describe("overdue-timestamp rule", () => {
         { name: "Expires", value: `<t:${NOW + 3600}:R>` },
       ]),
       NOW,
-      GRACE,
+      { graceSeconds: GRACE, doneInvasionNodes: [] },
     );
     expect(d.stale).toBe(true);
   });
 
   it("keeps messages with no timestamp at all", () => {
-    const d = decide(msg([{ name: "Price", value: "120p" }]), NOW, GRACE);
+    const d = decide(msg([{ name: "Price", value: "120p" }]), NOW, { graceSeconds: GRACE, doneInvasionNodes: [] });
     expect(d.matched).toBeUndefined();
     expect(d.stale).toBe(false);
   });
 
   it("also reads timestamps from message content", () => {
-    const d = decide(msg([], `ended <t:${NOW - 600}:R>`), NOW, GRACE);
+    const d = decide(msg([], `ended <t:${NOW - 600}:R>`), NOW, { graceSeconds: GRACE, doneInvasionNodes: [] });
     expect(d.stale).toBe(true);
   });
 });
