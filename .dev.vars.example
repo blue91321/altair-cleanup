@@ -1,0 +1,8 @@
+# Copy to `.dev.vars` for local `wrangler dev`. NEVER commit `.dev.vars`.
+# In production these are set with `wrangler secret put <NAME>`.
+DISCORD_BOT_TOKEN="your-bot-token"
+DISCORD_PUBLIC_KEY="your-app-public-key"
+DISCORD_APPLICATION_ID="your-application-id"
+
+# Used only by scripts/register.ts (optional guild for instant registration):
+DISCORD_GUILD_ID="your-test-guild-id"
