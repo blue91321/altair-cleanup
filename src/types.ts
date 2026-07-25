@@ -45,6 +45,7 @@ export interface Env {
   DISCORD_APPLICATION_ID: string;
   // Vars
   ALTAIR_USER_ID: string;
+  ALTAIR_WEBHOOK_NAME: string;
   CLEANUP_CHANNEL_IDS: string;
   SCAN_LIMIT: string;
   DRY_RUN: string;

@@ -2,6 +2,7 @@ import type { Env } from "./types.js";
 import { fetchChannelMessages, deleteMessage } from "./discord.js";
 import { decide } from "./classifiers/index.js";
 import { getAllWatchedChannels } from "./watchlist.js";
+import { isAltairMessage, type AltairIdentity } from "./altair.js";
 
 export interface CleanupResult {
   scanned: number;
@@ -21,6 +22,10 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
   const dryRun = env.DRY_RUN !== "false";
   const limit = Number(env.SCAN_LIMIT || "100");
   const channelIds = await getAllWatchedChannels(env);
+  const altair: AltairIdentity = {
+    userId: env.ALTAIR_USER_ID,
+    webhookName: env.ALTAIR_WEBHOOK_NAME || "Altair",
+  };
 
   const result: CleanupResult = {
     scanned: 0,
@@ -49,7 +54,7 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
     }
 
     for (const msg of messages) {
-      if (msg.author.id !== env.ALTAIR_USER_ID) continue; // only Altair's messages
+      if (!isAltairMessage(msg, altair)) continue; // only Altair's messages
       if (msg.pinned) continue; // never touch pinned (e.g. Dynamic auto-updaters)
       result.altairMessages++;
 
@@ -73,9 +78,9 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
     }
 
     // If we saw messages but none matched Altair, surface who WAS there.
-    if (messages.length > 0 && !messages.some((m) => m.author.id === env.ALTAIR_USER_ID)) {
+    if (messages.length > 0 && !messages.some((m) => isAltairMessage(m, altair))) {
       const list = [...authorsSeen.entries()].map(([id, tag]) => `${tag}=${id}`).join(", ");
-      result.details.push(`no Altair (${env.ALTAIR_USER_ID}) in ${channelId}; authors seen: ${list}`);
+      result.details.push(`no Altair in ${channelId}; authors seen: ${list}`);
     }
   }
 

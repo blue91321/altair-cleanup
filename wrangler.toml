@@ -19,9 +19,14 @@ crons = ["*/15 * * * *"]
 DISCORD_APPLICATION_ID = "1530452805733716058"
 DISCORD_PUBLIC_KEY = "49d2cd546d1ee9efd1a55f79cd50e5779f4961f3ce7042eec55591e71acd84c8"
 
-# Altair's Discord application/user ID. Only messages from this author are
-# ever considered for deletion.
+# Altair's Discord bot user ID (used in servers where it posts as the bot user).
 ALTAIR_USER_ID = "522879744786563075"
+
+# Altair sends notifications via a per-server WEBHOOK named "Altair" (its author
+# id differs per server, so we match on this exact name instead). Exact,
+# case-insensitive match — must catch "Altair" but NOT this bot's own
+# "Altair Cleanup" replies.
+ALTAIR_WEBHOOK_NAME = "Altair"
 
 # OPTIONAL static extra channels, merged with whatever /watch add stores in KV.
 # Normally leave this empty and manage channels at runtime via /watch.
