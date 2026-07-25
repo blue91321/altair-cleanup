@@ -30,6 +30,7 @@ export interface DiscordMessage {
   timestamp: string; // ISO8601, when the message was posted
   pinned: boolean;
   embeds: DiscordEmbed[];
+  components?: unknown[]; // Components V2 payload (used instead of embeds)
   webhook_id?: string; // present when the message was sent via a webhook
 }
 

@@ -64,7 +64,12 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
       // can see exactly how Altair encodes its expiry. Gated on DEBUG=1.
       if (env.DEBUG === "1" && result.altairMessages === 1) {
         const ts = messageTimestamps(msg);
-        result.details.push(`dbg ts=[${ts.join(",")}] embeds=${JSON.stringify(msg.embeds).slice(0, 1400)}`);
+        const dump = JSON.stringify({
+          content: msg.content,
+          embeds: msg.embeds,
+          components: msg.components,
+        }).slice(0, 1500);
+        result.details.push(`dbg ts=[${ts.join(",")}] ${dump}`);
       }
 
       const { matched, stale } = decide(msg, now, graceSeconds);
