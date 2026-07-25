@@ -10,11 +10,13 @@ interface ApiInvasion {
 }
 
 /**
- * Node strings of invasions that are currently COMPLETED (`completed: true`).
- * Returns null on any failure so callers can safely decline to delete when the
- * worldstate can't be verified.
+ * Node strings of invasions that are currently ACTIVE (`completed: false`).
+ * A message's invasion is considered over once its node is NOT in this set —
+ * which covers both completed-but-lingering invasions and ones that have fully
+ * rotated out of the worldstate. Returns null on any failure so callers can
+ * safely decline to delete when the worldstate can't be verified.
  */
-export async function fetchDoneInvasionNodes(
+export async function fetchActiveInvasionNodes(
   platform: string,
   fetchImpl: FetchLike = fetch,
 ): Promise<string[] | null> {
@@ -26,7 +28,7 @@ export async function fetchDoneInvasionNodes(
     const data = (await res.json()) as unknown;
     if (!Array.isArray(data)) return null;
     return (data as ApiInvasion[])
-      .filter((i) => i && i.completed === true && typeof i.node === "string")
+      .filter((i) => i && i.completed === false && typeof i.node === "string")
       .map((i) => i.node as string);
   } catch {
     return null;

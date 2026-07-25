@@ -49,7 +49,11 @@
       "Bash(curl -s --max-time 25 -A \"Mozilla/5.0 \\(Windows NT 10.0; Win64; x64\\)\" \"https://content.warframe.com/dynamic/worldState.php\")",
       "Bash(node -e 'let d=\"\";process.stdin.on\\(\"data\",c=>d+=c\\).on\\(\"end\",\\(\\)=>{try{const w=JSON.parse\\(d\\);const inv=w.Invasions||[];console.log\\(\"invasion count:\",inv.length\\);const e=inv[0];console.log\\(\"keys:\",Object.keys\\(e\\).join\\(\", \"\\)\\);console.log\\(\"Node:\",e.Node,\"| Count:\",e.Count,\"| Goal:\",e.Goal,\"| Completed:\",e.Completed\\);}catch\\(err\\){console.log\\(\"err:\",err.message,\"| body start:\",d.slice\\(0,200\\)\\);}}\\)')",
       "Bash(git -c user.name=blue91321 -c user.email=blakerobinsonsinger1@gmail.com commit -m 'Add invasion classifier using worldstate API *)",
-      "Bash(gh pr create --base main --head invasion-classifier --title 'Add invasion classifier \\(worldstate API\\)' --body ' *)"
+      "Bash(gh pr create --base main --head invasion-classifier --title 'Add invasion classifier \\(worldstate API\\)' --body ' *)",
+      "Bash(curl -s --max-time 25 -A \"Mozilla/5.0\" \"https://api.warframestat.us/pc/invasions\")",
+      "Bash(node -e 'let d=\"\";process.stdin.on\\(\"data\",c=>d+=c\\).on\\(\"end\",\\(\\)=>{const a=JSON.parse\\(d\\);const check=[\"Outer Terminus \\(Pluto\\)\",\"Io \\(Jupiter\\)\",\"Palus \\(Pluto\\)\"];const byNode=Object.fromEntries\\(a.map\\(i=>[i.node,i.completed]\\)\\);console.log\\(\"all current nodes:\",a.map\\(i=>i.node\\).join\\(\" | \"\\)\\);console.log\\(\"--- checking the three ---\"\\);check.forEach\\(n=>console.log\\(n,\"->\", n in byNode ? \\(\"completed:\"+byNode[n]\\) : \"NOT IN API \\(gone\\)\"\\)\\);}\\);')",
+      "Bash(git -c user.name=blue91321 -c user.email=blakerobinsonsinger1@gmail.com commit -m 'Invasion staleness: check against ACTIVE nodes, not just completed *)",
+      "Bash(gh pr create --base main --head invasion-active-check --title 'Fix invasions: delete when node is no longer active \\(not just completed\\)' --body ' *)"
     ]
   }
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fetchDoneInvasionNodes } from "../src/warframe.js";
+import { fetchActiveInvasionNodes } from "../src/warframe.js";
 
 function mockFetch(status: number, body: unknown) {
   return async () =>
@@ -10,31 +10,32 @@ function mockFetch(status: number, body: unknown) {
     }) as unknown as Response;
 }
 
-describe("fetchDoneInvasionNodes", () => {
-  it("returns only the completed node strings", async () => {
+describe("fetchActiveInvasionNodes", () => {
+  it("returns only the active (not completed) node strings", async () => {
     const body = [
       { node: "Gulliver (Phobos)", completed: true },
       { node: "Nuovo (Ceres)", completed: false },
       { node: "Themisto (Jupiter)", completed: true },
+      { node: "Hades (Pluto)", completed: false },
     ];
-    expect(await fetchDoneInvasionNodes("pc", mockFetch(200, body))).toEqual([
-      "Gulliver (Phobos)",
-      "Themisto (Jupiter)",
+    expect(await fetchActiveInvasionNodes("pc", mockFetch(200, body))).toEqual([
+      "Nuovo (Ceres)",
+      "Hades (Pluto)",
     ]);
   });
 
   it("returns null on a non-OK response", async () => {
-    expect(await fetchDoneInvasionNodes("pc", mockFetch(503, {}))).toBeNull();
+    expect(await fetchActiveInvasionNodes("pc", mockFetch(503, {}))).toBeNull();
   });
 
   it("returns null when the fetch throws", async () => {
     const throwing = async () => {
       throw new Error("network");
     };
-    expect(await fetchDoneInvasionNodes("pc", throwing)).toBeNull();
+    expect(await fetchActiveInvasionNodes("pc", throwing)).toBeNull();
   });
 
   it("returns null when the payload isn't an array", async () => {
-    expect(await fetchDoneInvasionNodes("pc", mockFetch(200, { error: "x" }))).toBeNull();
+    expect(await fetchActiveInvasionNodes("pc", mockFetch(200, { error: "x" }))).toBeNull();
   });
 });

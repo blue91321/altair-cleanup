@@ -12,10 +12,10 @@ export interface DecideOptions {
   /** Overdue-timestamp grace window, in seconds. */
   graceSeconds: number;
   /**
-   * Completed invasion node strings from the worldstate API, or null when the
-   * API could not be reached (in which case invasions are never deleted).
+   * Currently-active invasion node strings from the worldstate API, or null when
+   * the API could not be reached (in which case invasions are never deleted).
    */
-  doneInvasionNodes: string[] | null;
+  activeInvasionNodes: string[] | null;
 }
 
 /**
@@ -31,8 +31,8 @@ export interface DecideOptions {
  */
 export function decide(msg: DiscordMessage, now: number, opts: DecideOptions): Decision {
   if (isInvasionMessage(msg)) {
-    if (opts.doneInvasionNodes === null) return { matched: "invasion", stale: false };
-    return { matched: "invasion", stale: invasionStale(msg, opts.doneInvasionNodes) };
+    if (opts.activeInvasionNodes === null) return { matched: "invasion", stale: false };
+    return { matched: "invasion", stale: invasionStale(msg, opts.activeInvasionNodes) };
   }
   if (messageTimestamps(msg).length === 0) return { stale: false };
   return { matched: "overdue-timestamp", stale: isOverdue(msg, now, opts.graceSeconds) };

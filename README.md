@@ -46,8 +46,9 @@ The first classifier that recognizes a message decides whether it's stale.
 - `invasion` — invasion alerts (single-node and the "Current Invasions"
   summary) carry no timestamp, so staleness is checked against the live
   worldstate API (`api.warframestat.us/<WORLDSTATE_PLATFORM>/invasions`). An
-  invasion message is deleted once **any** invasion it references is completed.
-  If the API is unreachable, invasion messages are never deleted.
+  invasion message is deleted once **any** invasion it references is no longer
+  active (completed or rotated out of the worldstate). If the API is
+  unreachable, invasion messages are never deleted.
 - Anything no classifier recognizes is **kept** (safe default).
 
 To add support for a new Altair message type, drop a new file in
