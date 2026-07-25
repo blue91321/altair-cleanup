@@ -24,7 +24,7 @@ const app = new DiscordHono<{ Bindings: Env }>({
   // Manual trigger: /cleanup
   // Deferred because scanning + deleting can take longer than Discord's 3s ACK.
   .command("cleanup", (c) =>
-    c.resDefer(async (c) => {
+    c.ephemeral().resDefer(async (c) => {
       try {
         const result = await runCleanup(c.env);
         await c.followup({ content: summarize(result) });
