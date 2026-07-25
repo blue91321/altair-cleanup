@@ -39,6 +39,10 @@ SCAN_LIMIT = "100"
 # timestamp at least this many seconds in the past (120 = 2 minutes).
 STALE_GRACE_SECONDS = "120"
 
+# Temporary: when "1", /cleanup dumps the first Altair message's raw embeds for
+# debugging. Remove once expiry parsing is confirmed.
+DEBUG = "1"
+
 # Safety switch. While "true", the bot logs what it WOULD delete but does not
 # actually delete anything. Set to "false" once you've verified the logs.
 DRY_RUN = "true"
