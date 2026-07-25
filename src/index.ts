@@ -1,6 +1,7 @@
 import { DiscordHono } from "discord-hono";
 import type { Env } from "./types.js";
 import { runCleanup } from "./cleanup.js";
+import { addChannel, removeChannel, getGuildChannels } from "./watchlist.js";
 
 function summarize(r: Awaited<ReturnType<typeof runCleanup>>): string {
   const head =
@@ -28,6 +29,48 @@ const app = new DiscordHono<{ Bindings: Env }>({
       await c.followup({ content: summarize(result) });
     }),
   )
+  // /watch add|remove|list — manage which channels the cron watches for Altair.
+  .command("watch", async (c) => {
+    const guildId = c.interaction.guild_id;
+    if (!guildId) return c.ephemeral().res("Use this command inside a server.");
+    const env = c.env as Env;
+
+    switch (c.sub.command) {
+      case "add": {
+        const channelId = (c.get as (k: string) => string)("channel");
+        const { added, channels } = await addChannel(env, guildId, channelId);
+        return c
+          .ephemeral()
+          .res(
+            added
+              ? `✅ Now watching <#${channelId}>. Watching ${channels.length} channel(s).`
+              : `<#${channelId}> is already being watched.`,
+          );
+      }
+      case "remove": {
+        const channelId = (c.get as (k: string) => string)("channel");
+        const { removed, channels } = await removeChannel(env, guildId, channelId);
+        return c
+          .ephemeral()
+          .res(
+            removed
+              ? `🗑️ Stopped watching <#${channelId}>. Watching ${channels.length} channel(s).`
+              : `<#${channelId}> was not being watched.`,
+          );
+      }
+      case "list":
+      default: {
+        const channels = await getGuildChannels(env, guildId);
+        return c
+          .ephemeral()
+          .res(
+            channels.length
+              ? `Watching ${channels.length} channel(s):\n${channels.map((id) => `• <#${id}>`).join("\n")}`
+              : "Not watching any channels yet. Use `/watch add` to add one.",
+          );
+      }
+    }
+  })
   // Automatic trigger: the cron string MUST match one in wrangler.toml [triggers].
   .cron("*/15 * * * *", async (c) => {
     const result = await runCleanup(c.env as Env);
