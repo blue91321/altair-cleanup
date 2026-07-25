@@ -36,6 +36,8 @@ export interface DiscordMessage {
 // Index signature keeps it assignable to discord-hono's Bindings constraint.
 export interface Env {
   [key: string]: unknown;
+  // KV namespace storing per-guild watched-channel lists (see watchlist.ts).
+  WATCH_KV: KVNamespace;
   // Secrets
   DISCORD_BOT_TOKEN: string;
   DISCORD_PUBLIC_KEY: string;

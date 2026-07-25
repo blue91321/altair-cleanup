@@ -1,6 +1,7 @@
 import type { Env } from "./types.js";
 import { fetchChannelMessages, deleteMessage } from "./discord.js";
 import { decide } from "./classifiers/index.js";
+import { getAllWatchedChannels } from "./watchlist.js";
 
 export interface CleanupResult {
   scanned: number;
@@ -11,12 +12,6 @@ export interface CleanupResult {
   details: string[];
 }
 
-function parseChannelIds(env: Env): string[] {
-  return env.CLEANUP_CHANNEL_IDS.split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
-}
-
 /**
  * Scan the configured channels and delete stale Altair messages.
  * If DRY_RUN is "true", nothing is deleted; the result reports what would be.
@@ -25,7 +20,7 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
   const now = Math.floor(Date.now() / 1000);
   const dryRun = env.DRY_RUN !== "false";
   const limit = Number(env.SCAN_LIMIT || "100");
-  const channelIds = parseChannelIds(env);
+  const channelIds = await getAllWatchedChannels(env);
 
   const result: CleanupResult = {
     scanned: 0,
@@ -37,7 +32,7 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
   };
 
   if (channelIds.length === 0) {
-    result.details.push("No CLEANUP_CHANNEL_IDS configured; nothing to do.");
+    result.details.push("No watched channels; use /watch add to add one.");
     return result;
   }
 

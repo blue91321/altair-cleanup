@@ -16,9 +16,8 @@ crons = ["*/15 * * * *"]
 # ever considered for deletion.
 ALTAIR_USER_ID = "522879744786563075"
 
-# Comma-separated list of channel IDs to scan for stale Altair messages.
-# Fill these in with your own channel IDs (enable Discord Developer Mode,
-# right-click a channel -> Copy Channel ID).
+# OPTIONAL static extra channels, merged with whatever /watch add stores in KV.
+# Normally leave this empty and manage channels at runtime via /watch.
 CLEANUP_CHANNEL_IDS = ""
 
 # How many recent messages to fetch per channel per run (max 100).
@@ -27,3 +26,14 @@ SCAN_LIMIT = "100"
 # Safety switch. While "true", the bot logs what it WOULD delete but does not
 # actually delete anything. Set to "false" once you've verified the logs.
 DRY_RUN = "true"
+
+# ---------------------------------------------------------------------------
+# KV namespace for the /watch channel list. Create it once with:
+#   npx wrangler kv namespace create WATCH_KV
+# then paste the printed id below (replace REPLACE_WITH_KV_ID).
+# For local `wrangler dev`, also run: npx wrangler kv namespace create WATCH_KV --preview
+# and add `preview_id = "..."` to this block.
+# ---------------------------------------------------------------------------
+[[kv_namespaces]]
+binding = "WATCH_KV"
+id = "REPLACE_WITH_KV_ID"

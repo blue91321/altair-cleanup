@@ -1,8 +1,27 @@
-import { Command, register } from "discord-hono";
+import { Command, SubCommand, Option, register } from "discord-hono";
+
+// "32" = Manage Guild. Restricts these commands to server managers by default;
+// server admins can further adjust via Server Settings → Integrations.
+const MANAGE_GUILD = "32";
 
 // Slash command definitions. Run with: npm run register
 const commands = [
-  new Command("cleanup", "Scan configured channels and delete stale Altair messages."),
+  new Command(
+    "cleanup",
+    "Scan watched channels and delete stale Altair messages.",
+  ).default_member_permissions(MANAGE_GUILD),
+
+  new Command("watch", "Manage which channels the bot watches for stale Altair messages.")
+    .default_member_permissions(MANAGE_GUILD)
+    .options(
+      new SubCommand("add", "Watch a channel for stale Altair messages.").options(
+        new Option("channel", "Channel to watch.", "Channel").required(),
+      ),
+      new SubCommand("remove", "Stop watching a channel.").options(
+        new Option("channel", "Channel to stop watching.", "Channel").required(),
+      ),
+      new SubCommand("list", "List the channels currently being watched."),
+    ),
 ];
 
 const applicationId = process.env.DISCORD_APPLICATION_ID;

@@ -9,6 +9,29 @@ It runs two ways:
 - **Automatically** on a Cron Trigger (every 15 min by default).
 - **Manually** via the `/cleanup` slash command.
 
+## Choosing which channels to watch
+
+Watched channels are managed at runtime with the `/watch` command (no redeploy
+needed) and stored in a Cloudflare **KV namespace**, one list per server:
+
+- `/watch add channel:#some-channel` — start watching a channel
+- `/watch remove channel:#some-channel` — stop watching it
+- `/watch list` — show the channels this server is watching
+
+Both `/watch` and `/cleanup` default to **Manage Server** permission. The cron
+job scans every watched channel across all servers. (You can also set an
+optional static `CLEANUP_CHANNEL_IDS` in `wrangler.toml`, merged with the KV
+lists — normally leave it empty.)
+
+### One-time KV setup
+
+```bash
+npx wrangler kv namespace create WATCH_KV
+```
+
+Paste the printed `id` into the `[[kv_namespaces]]` block in `wrangler.toml`
+(replacing `REPLACE_WITH_KV_ID`).
+
 ## How it decides what to delete
 
 Only messages **authored by Altair** and **not pinned** are ever considered.
