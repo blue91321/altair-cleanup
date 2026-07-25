@@ -1,0 +1,46 @@
+name: Register Commands
+
+# Registers the Discord slash commands (/cleanup, /watch) so you never have to
+# run `npm run register` from your own machine. Trigger from the Actions tab
+# ("Run workflow").
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   DISCORD_APPLICATION_ID  — Discord dev portal → General Information
+#   DISCORD_BOT_TOKEN       — Discord dev portal → Bot
+#
+# Guild vs global:
+#   - Leave "guild_id" blank to register GLOBAL commands (can take up to ~1 hour
+#     to appear in every server).
+#   - Provide a "guild_id" to register to just that server INSTANTLY — best for
+#     testing. (Enable Discord Developer Mode → right-click the server icon →
+#     Copy Server ID.)
+
+on:
+  workflow_dispatch:
+    inputs:
+      guild_id:
+        description: Server (guild) ID for instant registration; blank = global
+        type: string
+        required: false
+        default: ""
+
+jobs:
+  register:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Register Discord slash commands
+        run: npm run register
+        env:
+          DISCORD_APPLICATION_ID: ${{ secrets.DISCORD_APPLICATION_ID }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_GUILD_ID: ${{ inputs.guild_id }}
