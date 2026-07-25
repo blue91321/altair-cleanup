@@ -40,6 +40,14 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
     const messages = await fetchChannelMessages(channelId, env.DISCORD_BOT_TOKEN, limit);
     result.scanned += messages.length;
 
+    // Diagnostic: record the distinct authors seen, so a "0 from Altair" result
+    // can reveal whether Altair posts under a different id / via a webhook.
+    const authorsSeen = new Map<string, string>();
+    for (const msg of messages) {
+      const tag = `${msg.author.username ?? "?"}${msg.webhook_id ? " [webhook]" : msg.author.bot ? " [bot]" : ""}`;
+      authorsSeen.set(msg.author.id, tag);
+    }
+
     for (const msg of messages) {
       if (msg.author.id !== env.ALTAIR_USER_ID) continue; // only Altair's messages
       if (msg.pinned) continue; // never touch pinned (e.g. Dynamic auto-updaters)
@@ -62,6 +70,12 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
       } else {
         result.details.push(`FAILED to delete ${channelId}/${msg.id} (${label})`);
       }
+    }
+
+    // If we saw messages but none matched Altair, surface who WAS there.
+    if (messages.length > 0 && !messages.some((m) => m.author.id === env.ALTAIR_USER_ID)) {
+      const list = [...authorsSeen.entries()].map(([id, tag]) => `${tag}=${id}`).join(", ");
+      result.details.push(`no Altair (${env.ALTAIR_USER_ID}) in ${channelId}; authors seen: ${list}`);
     }
   }
 

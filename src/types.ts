@@ -30,6 +30,7 @@ export interface DiscordMessage {
   timestamp: string; // ISO8601, when the message was posted
   pinned: boolean;
   embeds: DiscordEmbed[];
+  webhook_id?: string; // present when the message was sent via a webhook
 }
 
 // Environment bindings (see wrangler.toml [vars] + secrets).
