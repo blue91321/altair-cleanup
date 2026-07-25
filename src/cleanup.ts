@@ -3,7 +3,6 @@ import { fetchChannelMessages, deleteMessage } from "./discord.js";
 import { decide } from "./classifiers/index.js";
 import { getAllWatchedChannels } from "./watchlist.js";
 import { isAltairMessage, type AltairIdentity } from "./altair.js";
-import { messageTimestamps } from "./classifiers/overdueTimestamp.js";
 
 export interface CleanupResult {
   scanned: number;
@@ -59,18 +58,6 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
       if (!isAltairMessage(msg, altair)) continue; // only Altair's messages
       if (msg.pinned) continue; // never touch pinned (e.g. Dynamic auto-updaters)
       result.altairMessages++;
-
-      // Temporary diagnostic: dump the first Altair message's raw embeds so we
-      // can see exactly how Altair encodes its expiry. Gated on DEBUG=1.
-      if (env.DEBUG === "1" && result.altairMessages === 1) {
-        const ts = messageTimestamps(msg);
-        const dump = JSON.stringify({
-          content: msg.content,
-          embeds: msg.embeds,
-          components: msg.components,
-        }).slice(0, 1500);
-        result.details.push(`dbg ts=[${ts.join(",")}] ${dump}`);
-      }
 
       const { matched, stale } = decide(msg, now, graceSeconds);
       if (!stale) continue;
