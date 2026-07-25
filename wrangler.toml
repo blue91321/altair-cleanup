@@ -41,7 +41,7 @@ STALE_GRACE_SECONDS = "120"
 
 # Safety switch. While "true", the bot logs what it WOULD delete but does not
 # actually delete anything. Set to "false" once you've verified the logs.
-DRY_RUN = "true"
+DRY_RUN = "false"
 
 # ---------------------------------------------------------------------------
 # KV namespace for the /watch channel list. Create it once with:
