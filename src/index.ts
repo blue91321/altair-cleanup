@@ -25,8 +25,14 @@ const app = new DiscordHono<{ Bindings: Env }>({
   // Deferred because scanning + deleting can take longer than Discord's 3s ACK.
   .command("cleanup", (c) =>
     c.resDefer(async (c) => {
-      const result = await runCleanup(c.env);
-      await c.followup({ content: summarize(result) });
+      try {
+        const result = await runCleanup(c.env);
+        await c.followup({ content: summarize(result) });
+      } catch (e) {
+        // Without this, a thrown error leaves the interaction stuck "thinking".
+        const msg = e instanceof Error ? e.message : String(e);
+        await c.followup({ content: `⚠️ Cleanup failed: ${msg}` });
+      }
     }),
   )
   // /watch add|remove|list — manage which channels the cron watches for Altair.
