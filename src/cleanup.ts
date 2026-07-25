@@ -1,7 +1,7 @@
 import type { Env } from "./types.js";
 import { fetchChannelMessages, deleteMessage } from "./discord.js";
 import { decide } from "./classifiers/index.js";
-import { getAllWatchedChannels } from "./watchlist.js";
+import { getAllWatchedChannels, getGuildChannels } from "./watchlist.js";
 import { isAltairMessage, type AltairIdentity } from "./altair.js";
 import { fetchActiveInvasionNodes } from "./warframe.js";
 
@@ -15,14 +15,19 @@ export interface CleanupResult {
 }
 
 /**
- * Scan the configured channels and delete stale Altair messages.
- * If DRY_RUN is "true", nothing is deleted; the result reports what would be.
+ * Scan watched channels and delete stale Altair messages.
+ *
+ * Pass a `scope` with a guildId to limit the run to one server's watched
+ * channels (used by the /cleanup command); omit it to scan every server's
+ * channels (used by the cron). If DRY_RUN is "true", nothing is deleted.
  */
-export async function runCleanup(env: Env): Promise<CleanupResult> {
+export async function runCleanup(env: Env, scope?: { guildId: string }): Promise<CleanupResult> {
   const now = Math.floor(Date.now() / 1000);
   const dryRun = env.DRY_RUN !== "false";
   const limit = Number(env.SCAN_LIMIT || "100");
-  const channelIds = await getAllWatchedChannels(env);
+  const channelIds = scope
+    ? await getGuildChannels(env, scope.guildId)
+    : await getAllWatchedChannels(env);
   const altair: AltairIdentity = {
     userId: env.ALTAIR_USER_ID,
     webhookName: env.ALTAIR_WEBHOOK_NAME || "Altair",
@@ -46,7 +51,16 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
   }
 
   for (const channelId of channelIds) {
-    const messages = await fetchChannelMessages(channelId, env.DISCORD_BOT_TOKEN, limit);
+    // One inaccessible channel (deleted, bot removed, etc.) must not abort the
+    // whole run — skip it and report, keep scanning the rest.
+    let messages;
+    try {
+      messages = await fetchChannelMessages(channelId, env.DISCORD_BOT_TOKEN, limit);
+    } catch (e) {
+      const m = e instanceof Error ? e.message : String(e);
+      result.details.push(`skipped ${channelId}: ${m.slice(0, 140)}`);
+      continue;
+    }
     result.scanned += messages.length;
 
     // Diagnostic: record the distinct authors seen, so a "0 from Altair" result

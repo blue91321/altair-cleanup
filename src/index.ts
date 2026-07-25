@@ -23,18 +23,20 @@ const app = new DiscordHono<{ Bindings: Env }>({
 })
   // Manual trigger: /cleanup
   // Deferred because scanning + deleting can take longer than Discord's 3s ACK.
-  .command("cleanup", (c) =>
-    c.ephemeral().resDefer(async (c) => {
+  .command("cleanup", (c) => {
+    const guildId = c.interaction.guild_id;
+    if (!guildId) return c.ephemeral().res("Use this command inside a server.");
+    return c.ephemeral().resDefer(async (c) => {
       try {
-        const result = await runCleanup(c.env);
+        const result = await runCleanup(c.env, { guildId });
         await c.followup({ content: summarize(result) });
       } catch (e) {
         // Without this, a thrown error leaves the interaction stuck "thinking".
         const msg = e instanceof Error ? e.message : String(e);
         await c.followup({ content: `⚠️ Cleanup failed: ${msg}` });
       }
-    }),
-  )
+    });
+  })
   // /watch add|remove|list — manage which channels the cron watches for Altair.
   .command("watch", async (c) => {
     const guildId = c.interaction.guild_id;
