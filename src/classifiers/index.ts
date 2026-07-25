@@ -1,33 +1,22 @@
-import type { Classifier, DiscordMessage } from "../types.js";
-import { sortieClassifier } from "./sortie.js";
-import { expiryTimestampClassifier } from "./expiryTimestamp.js";
-
-/**
- * The classifier registry. ORDER MATTERS: the first classifier whose match()
- * returns true owns the message. Put specific classifiers first and the generic
- * expiry catch-all LAST.
- *
- * To support a new Altair message type: create a file in this folder exporting a
- * Classifier, then add it to this array above the generic catch-all.
- */
-export const classifiers: Classifier[] = [
-  sortieClassifier,
-  // ... add more specific Altair message-type classifiers here ...
-  expiryTimestampClassifier, // keep last
-];
+import type { DiscordMessage } from "../types.js";
+import { messageTimestamps, isOverdue } from "./overdueTimestamp.js";
 
 export interface Decision {
-  matched?: Classifier;
+  /** Name of the rule that matched, for logging. */
+  matched?: string;
   stale: boolean;
 }
 
-/** Decide whether an (already Altair-authored) message is stale. */
-export function decide(msg: DiscordMessage, now: number): Decision {
-  for (const c of classifiers) {
-    if (c.match(msg)) {
-      return { matched: c, stale: c.isStale(msg, now) };
-    }
-  }
-  // No classifier recognized it -> keep it (safe default).
-  return { stale: false };
+/**
+ * Decide whether an (already Altair-authored) message is stale.
+ *
+ * Current rule: stale if the message carries any Discord timestamp at least
+ * `graceSeconds` in the past. Messages with no timestamp are always kept.
+ *
+ * This is deliberately a single simple rule for now. Per-Altair-message-type
+ * classifiers will be layered in here later.
+ */
+export function decide(msg: DiscordMessage, now: number, graceSeconds: number): Decision {
+  if (messageTimestamps(msg).length === 0) return { stale: false };
+  return { matched: "overdue-timestamp", stale: isOverdue(msg, now, graceSeconds) };
 }

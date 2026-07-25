@@ -26,6 +26,7 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
     userId: env.ALTAIR_USER_ID,
     webhookName: env.ALTAIR_WEBHOOK_NAME || "Altair",
   };
+  const graceSeconds = Number(env.STALE_GRACE_SECONDS || "120");
 
   const result: CleanupResult = {
     scanned: 0,
@@ -58,11 +59,11 @@ export async function runCleanup(env: Env): Promise<CleanupResult> {
       if (msg.pinned) continue; // never touch pinned (e.g. Dynamic auto-updaters)
       result.altairMessages++;
 
-      const { matched, stale } = decide(msg, now);
+      const { matched, stale } = decide(msg, now, graceSeconds);
       if (!stale) continue;
       result.stale++;
 
-      const label = matched?.name ?? "unknown";
+      const label = matched ?? "unknown";
       if (dryRun) {
         result.details.push(`[dry-run] would delete ${channelId}/${msg.id} (${label})`);
         continue;
