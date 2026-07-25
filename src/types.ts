@@ -19,6 +19,7 @@ export interface DiscordEmbed {
   timestamp?: string; // ISO8601, the embed's footer timestamp
   footer?: { text?: string };
   author?: { name?: string };
+  thumbnail?: { url?: string };
   fields?: DiscordEmbedField[];
 }
 
@@ -48,6 +49,7 @@ export interface Env {
   ALTAIR_USER_ID: string;
   ALTAIR_WEBHOOK_NAME: string;
   STALE_GRACE_SECONDS: string;
+  WORLDSTATE_PLATFORM: string;
   CLEANUP_CHANNEL_IDS: string;
   SCAN_LIMIT: string;
   DRY_RUN: string;

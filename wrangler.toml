@@ -39,6 +39,10 @@ SCAN_LIMIT = "100"
 # timestamp at least this many seconds in the past (120 = 2 minutes).
 STALE_GRACE_SECONDS = "120"
 
+# Platform whose worldstate is checked for invasion completion (via
+# api.warframestat.us/<platform>/invasions). One of: pc, ps4, xb1, swi.
+WORLDSTATE_PLATFORM = "pc"
+
 # Safety switch. While "true", the bot logs what it WOULD delete but does not
 # actually delete anything. Set to "false" once you've verified the logs.
 DRY_RUN = "false"
