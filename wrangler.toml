@@ -12,6 +12,13 @@ crons = ["*/15 * * * *"]
 # are set with `wrangler secret put <NAME>` and are NOT stored here.
 # ---------------------------------------------------------------------------
 [vars]
+# Discord app identity. These are PUBLIC by design (the public key only verifies
+# that interaction requests come from Discord; it grants no access), so they
+# live here rather than as secrets. The Bot Token is the only real secret and is
+# set via `wrangler secret put DISCORD_BOT_TOKEN`.
+DISCORD_APPLICATION_ID = "1530452805733716058"
+DISCORD_PUBLIC_KEY = "49d2cd546d1ee9efd1a55f79cd50e5779f4961f3ce7042eec55591e71acd84c8"
+
 # Altair's Discord application/user ID. Only messages from this author are
 # ever considered for deletion.
 ALTAIR_USER_ID = "522879744786563075"
