@@ -18,6 +18,10 @@ needed) and stored in a Cloudflare **KV namespace**, one list per server:
 - `/watch remove channel:#some-channel` — stop watching it
 - `/watch list` — show the channels this server is watching
 
+If a watched channel becomes inaccessible (deleted, or the bot loses access),
+cleanup auto-removes it from the watch list and reports it the next time that
+server runs `/watch list`.
+
 Both `/watch` and `/cleanup` default to **Manage Server** permission. The cron
 job scans every watched channel across all servers. (You can also set an
 optional static `CLEANUP_CHANNEL_IDS` in `wrangler.toml`, merged with the KV

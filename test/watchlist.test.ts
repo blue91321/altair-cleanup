@@ -4,6 +4,9 @@ import {
   removeChannel,
   getGuildChannels,
   getAllWatchedChannels,
+  listWatchGuilds,
+  recordAutoRemoved,
+  takeAutoRemovedNotices,
 } from "../src/watchlist.js";
 import type { Env } from "../src/types.js";
 
@@ -70,5 +73,24 @@ describe("watchlist", () => {
     await addChannel(env, "guild2", "chanC");
     const all = await getAllWatchedChannels(env);
     expect(all.sort()).toEqual(["chanA", "chanB", "chanC", "static1"].sort());
+  });
+
+  it("lists the guilds that have a watch list", async () => {
+    await addChannel(env, "guildA", "c1");
+    await addChannel(env, "guildB", "c2");
+    expect((await listWatchGuilds(env)).sort()).toEqual(["guildA", "guildB"]);
+  });
+
+  it("records and then clears auto-removed notices (one-time)", async () => {
+    await recordAutoRemoved(env, "guild1", ["deadA"]);
+    await recordAutoRemoved(env, "guild1", ["deadA", "deadB"]); // dedups
+    expect((await takeAutoRemovedNotices(env, "guild1")).sort()).toEqual(["deadA", "deadB"]);
+    // second read is empty — notice was cleared
+    expect(await takeAutoRemovedNotices(env, "guild1")).toEqual([]);
+  });
+
+  it("does not leak auto-removed notices into the watch-guild list", async () => {
+    await recordAutoRemoved(env, "guild1", ["deadA"]);
+    expect(await listWatchGuilds(env)).toEqual([]); // only watch: keys count
   });
 });

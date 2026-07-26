@@ -1,13 +1,14 @@
 import { DiscordHono } from "discord-hono";
 import type { Env } from "./types.js";
 import { runCleanup } from "./cleanup.js";
-import { addChannel, removeChannel, getGuildChannels } from "./watchlist.js";
+import { addChannel, removeChannel, getGuildChannels, takeAutoRemovedNotices } from "./watchlist.js";
 
 function summarize(r: Awaited<ReturnType<typeof runCleanup>>): string {
   const head =
     `${r.dryRun ? "🧪 **Dry run** — nothing was deleted.\n" : ""}` +
     `Scanned **${r.scanned}** messages, **${r.altairMessages}** from Altair, ` +
-    `**${r.stale}** stale, **${r.deleted}** deleted.`;
+    `**${r.stale}** stale, **${r.deleted}** deleted` +
+    `${r.autoRemoved ? `, **${r.autoRemoved}** inaccessible channel(s) auto-removed` : ""}.`;
   const lines = r.details.slice(0, 15).join("\n");
   const more = r.details.length > 15 ? `\n…and ${r.details.length - 15} more.` : "";
   return lines ? `${head}\n\`\`\`\n${lines}${more}\n\`\`\`` : head;
@@ -69,12 +70,19 @@ const app = new DiscordHono<{ Bindings: Env }>({
       case "list":
       default: {
         const channels = await getGuildChannels(env, guildId);
+        const removed = await takeAutoRemovedNotices(env, guildId);
+        const notice = removed.length
+          ? `⚠️ Auto-removed ${removed.length} inaccessible channel(s) (deleted or no access): ${removed
+              .map((id) => `<#${id}>`)
+              .join(", ")}\n\n`
+          : "";
         return c
           .ephemeral()
           .res(
-            channels.length
-              ? `Watching ${channels.length} channel(s):\n${channels.map((id) => `• <#${id}>`).join("\n")}`
-              : "Not watching any channels yet. Use `/watch add` to add one.",
+            notice +
+              (channels.length
+                ? `Watching ${channels.length} channel(s):\n${channels.map((id) => `• <#${id}>`).join("\n")}`
+                : "Not watching any channels yet. Use `/watch add` to add one."),
           );
       }
     }
@@ -84,7 +92,8 @@ const app = new DiscordHono<{ Bindings: Env }>({
     const result = await runCleanup(c.env as Env);
     console.log(
       `[cron cleanup] scanned=${result.scanned} altair=${result.altairMessages} ` +
-        `stale=${result.stale} deleted=${result.deleted} dryRun=${result.dryRun}`,
+        `stale=${result.stale} deleted=${result.deleted} autoRemoved=${result.autoRemoved} ` +
+        `dryRun=${result.dryRun}`,
     );
     for (const d of result.details) console.log(`  ${d}`);
   });
