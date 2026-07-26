@@ -2,6 +2,21 @@ import type { DiscordMessage } from "./types.js";
 
 const API = "https://discord.com/api/v10";
 
+/** An error carrying the HTTP status of a failed Discord API call. */
+export class DiscordHttpError extends Error {
+  status: number;
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "DiscordHttpError";
+    this.status = status;
+  }
+}
+
+/** True when the status means the channel is gone or unreachable for the bot. */
+export function isChannelInaccessible(status: number): boolean {
+  return status === 403 || status === 404; // Missing Access / Unknown Channel
+}
+
 /** Fetch up to `limit` (max 100) most recent messages from a channel. */
 export async function fetchChannelMessages(
   channelId: string,
@@ -13,7 +28,8 @@ export async function fetchChannelMessages(
     headers: { Authorization: `Bot ${token}` },
   });
   if (!res.ok) {
-    throw new Error(
+    throw new DiscordHttpError(
+      res.status,
       `Failed to fetch messages for channel ${channelId}: ${res.status} ${await res.text()}`,
     );
   }
