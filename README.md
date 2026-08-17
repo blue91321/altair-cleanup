@@ -38,7 +38,10 @@ Paste the printed `id` into the `[[kv_namespaces]]` block in `wrangler.toml`
 
 ## How it decides what to delete
 
-Only messages **authored by Altair** and **not pinned** are ever considered.
+Only messages **authored by Altair**, **not pinned**, and **not edited within the
+last day** are ever considered. That last rule protects Altair's auto-updating
+"Dynamic" posts, which continuously re-edit themselves — a recent edit means the
+message is still live. (Window: `RECENT_EDIT_GRACE_SECONDS`, default 86400.)
 Each candidate is run through a chain of **classifiers** (`src/classifiers/`).
 The first classifier that recognizes a message decides whether it's stale.
 

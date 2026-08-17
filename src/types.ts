@@ -29,6 +29,7 @@ export interface DiscordMessage {
   author: DiscordUser;
   content: string;
   timestamp: string; // ISO8601, when the message was posted
+  edited_timestamp?: string | null; // ISO8601 of the last edit, null if never edited
   pinned: boolean;
   embeds: DiscordEmbed[];
   components?: unknown[]; // Components V2 payload (used instead of embeds)
@@ -49,6 +50,7 @@ export interface Env {
   ALTAIR_USER_ID: string;
   ALTAIR_WEBHOOK_NAME: string;
   STALE_GRACE_SECONDS: string;
+  RECENT_EDIT_GRACE_SECONDS: string;
   WORLDSTATE_PLATFORM: string;
   CLEANUP_CHANNEL_IDS: string;
   SCAN_LIMIT: string;

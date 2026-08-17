@@ -39,6 +39,11 @@ SCAN_LIMIT = "100"
 # timestamp at least this many seconds in the past (120 = 2 minutes).
 STALE_GRACE_SECONDS = "120"
 
+# Never delete a message edited within this many seconds (86400 = 1 day).
+# Altair's "Dynamic" posts auto-update themselves, so a recent edit means the
+# message is still live. Ones last edited longer ago than this stay eligible.
+RECENT_EDIT_GRACE_SECONDS = "86400"
+
 # Platform whose worldstate is checked for invasion completion (via
 # api.warframestat.us/<platform>/invasions). One of: pc, ps4, xb1, swi.
 WORLDSTATE_PLATFORM = "pc"
