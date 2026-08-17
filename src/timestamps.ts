@@ -72,3 +72,22 @@ export function findExpiryTimestamp(msg: DiscordMessage): number | undefined {
 export function messageAgeSeconds(msg: DiscordMessage, now: number): number {
   return now - Math.floor(new Date(msg.timestamp).getTime() / 1000);
 }
+
+/**
+ * Was this message edited within the last `graceSeconds`?
+ *
+ * Altair's "Dynamic" posts auto-update themselves, so a recent edit means the
+ * message is still live and must never be deleted — even if the worldstate data
+ * it displays contains past timestamps. A message edited longer ago than the
+ * grace window is treated as abandoned and remains eligible for cleanup.
+ */
+export function editedRecently(
+  msg: DiscordMessage,
+  now: number,
+  graceSeconds: number,
+): boolean {
+  if (!msg.edited_timestamp) return false;
+  const editedAt = Math.floor(new Date(msg.edited_timestamp).getTime() / 1000);
+  if (Number.isNaN(editedAt)) return false;
+  return editedAt > now - graceSeconds;
+}

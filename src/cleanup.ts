@@ -9,6 +9,7 @@ import {
 } from "./watchlist.js";
 import { isAltairMessage, type AltairIdentity } from "./altair.js";
 import { fetchActiveInvasionNodes } from "./warframe.js";
+import { editedRecently } from "./timestamps.js";
 
 export interface CleanupResult {
   scanned: number;
@@ -63,6 +64,8 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
     webhookName: env.ALTAIR_WEBHOOK_NAME || "Altair",
   };
   const graceSeconds = Number(env.STALE_GRACE_SECONDS || "120");
+  // Messages edited this recently are treated as live (Altair "Dynamic" posts).
+  const recentEditGrace = Number(env.RECENT_EDIT_GRACE_SECONDS || "86400");
   // Fetched once per run; null if the worldstate API is unreachable.
   const activeInvasionNodes = await fetchActiveInvasionNodes(env.WORLDSTATE_PLATFORM || "pc");
 
@@ -118,6 +121,9 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
       for (const msg of messages) {
         if (!isAltairMessage(msg, altair)) continue; // only Altair's messages
         if (msg.pinned) continue; // never touch pinned (e.g. Dynamic auto-updaters)
+        // An Altair "Dynamic" message keeps re-editing itself; a recent edit
+        // means it is still live, so leave it alone.
+        if (editedRecently(msg, now, recentEditGrace)) continue;
         result.altairMessages++;
 
         const { matched, stale } = decide(msg, now, { graceSeconds, activeInvasionNodes });
