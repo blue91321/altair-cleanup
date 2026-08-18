@@ -44,6 +44,9 @@ STALE_GRACE_SECONDS = "120"
 # message is still live. Ones last edited longer ago than this stay eligible.
 RECENT_EDIT_GRACE_SECONDS = "86400"
 
+# How many deleted-message records to keep per server for /log (newest first).
+DELETION_LOG_LIMIT = "50"
+
 # Platform whose worldstate is checked for invasion completion (via
 # api.warframestat.us/<platform>/invasions). One of: pc, ps4, xb1, swi.
 WORLDSTATE_PLATFORM = "pc"

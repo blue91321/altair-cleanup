@@ -62,6 +62,19 @@ To add support for a new Altair message type, drop a new file in
 `src/classifiers/` exporting a `Classifier` and add it to the array in
 `src/classifiers/index.ts` (above the generic catch-all).
 
+## Deletion log
+
+Every message the bot deletes is recorded (per server) with its **reconstructed
+contents**, so you can audit what was removed after the fact:
+
+- `/log view` — show recent deletions (add `count:` for 1-20, default 5)
+- `/log clear` — wipe this server's records
+
+Each entry shows when it was deleted, the channel, which rule matched
+(`invasion`, `overdue-timestamp`, …) and a flattened copy of the message text
+and embed fields. The log keeps the newest `DELETION_LOG_LIMIT` records per
+server (default 50) in KV; older ones roll off automatically.
+
 ## Safety
 
 `DRY_RUN` in `wrangler.toml` starts as `"true"`: the bot logs what it *would*

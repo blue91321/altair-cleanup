@@ -10,6 +10,7 @@ import {
 import { isAltairMessage, type AltairIdentity } from "./altair.js";
 import { fetchActiveInvasionNodes } from "./warframe.js";
 import { editedRecently } from "./timestamps.js";
+import { appendLog, toRecord, type DeletionRecord } from "./deletionlog.js";
 
 export interface CleanupResult {
   scanned: number;
@@ -66,6 +67,7 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
   const graceSeconds = Number(env.STALE_GRACE_SECONDS || "120");
   // Messages edited this recently are treated as live (Altair "Dynamic" posts).
   const recentEditGrace = Number(env.RECENT_EDIT_GRACE_SECONDS || "86400");
+  const logLimit = Number(env.DELETION_LOG_LIMIT || "50");
   // Fetched once per run; null if the worldstate API is unreachable.
   const activeInvasionNodes = await fetchActiveInvasionNodes(env.WORLDSTATE_PLATFORM || "pc");
 
@@ -85,6 +87,9 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
   }
 
   for (const group of groups) {
+    // Deletion records for this guild, written to the log once per group.
+    const logRecords: DeletionRecord[] = [];
+
     for (const channelId of group.channelIds) {
       // A channel that is gone (404) or the bot can't access (403) is
       // auto-removed from its guild's watch list, with a notice queued for the
@@ -139,6 +144,8 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
         const ok = await deleteMessage(channelId, msg.id, env.DISCORD_BOT_TOKEN);
         if (ok) {
           result.deleted++;
+          // Record what the message said before it is gone for good.
+          logRecords.push(toRecord(msg, channelId, label, now));
           result.details.push(`deleted ${channelId}/${msg.id} (${label})`);
         } else {
           result.details.push(`FAILED to delete ${channelId}/${msg.id} (${label})`);
@@ -150,6 +157,11 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
         const list = [...authorsSeen.entries()].map(([id, tag]) => `${tag}=${id}`).join(", ");
         result.details.push(`no Altair in ${channelId}; authors seen: ${list}`);
       }
+    }
+
+    // Persist this guild's deletions. Static (non-guild) channels have no log.
+    if (group.guildId !== null) {
+      await appendLog(env, group.guildId, logRecords, logLimit);
     }
   }
 

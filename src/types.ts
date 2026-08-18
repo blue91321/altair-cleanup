@@ -51,6 +51,7 @@ export interface Env {
   ALTAIR_WEBHOOK_NAME: string;
   STALE_GRACE_SECONDS: string;
   RECENT_EDIT_GRACE_SECONDS: string;
+  DELETION_LOG_LIMIT: string;
   WORLDSTATE_PLATFORM: string;
   CLEANUP_CHANNEL_IDS: string;
   SCAN_LIMIT: string;
