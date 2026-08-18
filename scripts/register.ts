@@ -46,7 +46,15 @@ if (!applicationId || !token) {
   process.exit(1);
 }
 
-await register(commands, applicationId, token, guildId);
+// register() reports its own outcome and RESOLVES either way, so inspect the
+// returned log text and fail loudly — otherwise CI reports a false success.
+const result = await register(commands, applicationId, token, guildId);
+
+if (result.includes("Error registering commands")) {
+  console.error("Command registration FAILED (see the error above).");
+  process.exit(1);
+}
+
 console.log(
   guildId
     ? `Registered ${commands.length} command(s) to guild ${guildId}.`
