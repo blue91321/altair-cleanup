@@ -45,22 +45,33 @@ message is still live. (Window: `RECENT_EDIT_GRACE_SECONDS`, default 86400.)
 Each candidate is run through a chain of **classifiers** (`src/classifiers/`).
 The first classifier that recognizes a message decides whether it's stale.
 
-- `expiryTimestamp` — generic catch-all: any Altair embed containing a Discord
-  `<t:UNIX:R>` expiry (an "Expires / Ends / Leaves" style field) is deleted once
-  that time is in the past. This covers most notification types (Sortie, Baro,
-  Alerts, Arbitration, Invasions, Fissures, Events, …).
-- `sortie` — explicit handler for sortie posts (example of the per-type pattern).
 - `invasion` — invasion alerts (single-node and the "Current Invasions"
   summary) carry no timestamp, so staleness is checked against the live
   worldstate API (`api.warframestat.us/<WORLDSTATE_PLATFORM>/invasions`). An
   invasion message is deleted once **any** invasion it references is no longer
   active (completed or rotated out of the worldstate). If the API is
   unreachable, invasion messages are never deleted.
-- Anything no classifier recognizes is **kept** (safe default).
+- `overdue-timestamp` — everything else: stale once the message contains any
+  Discord `<t:UNIX>` timestamp at least `STALE_GRACE_SECONDS` (default 120) in
+  the past. Covers sorties, alerts, Baro, fissures and similar.
+- Messages with no timestamp and no matching rule are **kept** (safe default).
 
-To add support for a new Altair message type, drop a new file in
-`src/classifiers/` exporting a `Classifier` and add it to the array in
-`src/classifiers/index.ts` (above the generic catch-all).
+To support a new Altair message type, add a module under `src/classifiers/` and
+branch to it from `decide()` in `src/classifiers/index.ts` (ahead of the
+`overdue-timestamp` fallback).
+
+## Deletion log
+
+Every message the bot deletes is recorded (per server) with its **reconstructed
+contents**, so you can audit what was removed after the fact:
+
+- `/log view` — show recent deletions (add `count:` for 1-20, default 5)
+- `/log clear` — wipe this server's records
+
+Each entry shows when it was deleted, the channel, which rule matched
+(`invasion`, `overdue-timestamp`, …) and a flattened copy of the message text
+and embed fields. The log keeps the newest `DELETION_LOG_LIMIT` records per
+server (default 50) in KV; older ones roll off automatically.
 
 ## Safety
 

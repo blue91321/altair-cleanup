@@ -22,6 +22,17 @@ const commands = [
       ),
       new SubCommand("list", "List the channels currently being watched."),
     ),
+
+  new Command("log", "View or clear the log of Altair messages this bot deleted.")
+    .default_member_permissions(MANAGE_GUILD)
+    .options(
+      new SubCommand("view", "Show recently deleted messages and their contents.").options(
+        new Option("count", "How many to show (1-20, default 5).", "Integer")
+          .min_value(1)
+          .max_value(20),
+      ),
+      new SubCommand("clear", "Delete all logged deletion records for this server."),
+    ),
 ];
 
 const applicationId = process.env.DISCORD_APPLICATION_ID;
