@@ -64,6 +64,13 @@ qualifies only if it carries no timestamp of its own, isn't independently
 classifiable, and was posted within `CONTINUATION_WINDOW_SECONDS` (default 60)
 of the message it follows; any unrelated message breaks the chain.
 
+**Failsafe.** Some posts carry nothing datable at all — chiefly the trailing part
+of a split notification whose timed parent was already deleted, which would
+otherwise linger forever. An Altair message containing any phrase in
+`FAILSAFE_PHRASES` is deleted once it is older than `FAILSAFE_MIN_AGE_SECONDS`
+(default 1 week). A message still counting down to a **future** time is never
+touched, and leaving `FAILSAFE_PHRASES` empty disables the rule.
+
 To support a new Altair message type, add a module under `src/classifiers/` and
 branch to it from `decide()` in `src/classifiers/index.ts` (ahead of the
 `overdue-timestamp` fallback).

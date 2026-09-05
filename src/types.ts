@@ -53,6 +53,8 @@ export interface Env {
   RECENT_EDIT_GRACE_SECONDS: string;
   DELETION_LOG_LIMIT: string;
   CONTINUATION_WINDOW_SECONDS: string;
+  FAILSAFE_PHRASES: string;
+  FAILSAFE_MIN_AGE_SECONDS: string;
   WORLDSTATE_PLATFORM: string;
   CLEANUP_CHANNEL_IDS: string;
   SCAN_LIMIT: string;
