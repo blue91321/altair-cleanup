@@ -1,6 +1,7 @@
 import type { DiscordMessage } from "../types.js";
 import { messageTimestamps, isOverdue } from "./overdueTimestamp.js";
 import { isInvasionMessage, invasionStale } from "./invasion.js";
+import { failsafeStale, FAILSAFE_RULE, type FailsafeConfig } from "./failsafe.js";
 
 export interface Decision {
   /** Name of the rule that matched, for logging. */
@@ -16,6 +17,11 @@ export interface DecideOptions {
    * the API could not be reached (in which case invasions are never deleted).
    */
   activeInvasionNodes: string[] | null;
+  /**
+   * Last-resort phrase+age rule for messages no other rule can date. Omit to
+   * disable it.
+   */
+  failsafe?: FailsafeConfig;
 }
 
 /**
@@ -24,16 +30,27 @@ export interface DecideOptions {
  * Rules, in order:
  *  1. Invasion messages: stale once any invasion they reference is completed
  *     (verified against the worldstate API). Kept if the API is unavailable.
- *  2. Everything else: stale if it carries a Discord timestamp at least
- *     `graceSeconds` in the past. Timestamp-less messages are kept.
+ *  2. Timestamped messages: stale once a Discord timestamp is at least
+ *     `graceSeconds` in the past.
+ *  3. Failsafe: a configured phrase in a sufficiently old message. Applies even
+ *     when the rules above decline, so orphaned untimed posts can be cleared.
  *
- * Per-Altair-message-type rules can continue to be layered in here.
+ * Anything else is kept. Per-message-type rules can be layered in here.
  */
 export function decide(msg: DiscordMessage, now: number, opts: DecideOptions): Decision {
   if (isInvasionMessage(msg)) {
     if (opts.activeInvasionNodes === null) return { matched: "invasion", stale: false };
-    return { matched: "invasion", stale: invasionStale(msg, opts.activeInvasionNodes) };
+    if (invasionStale(msg, opts.activeInvasionNodes)) return { matched: "invasion", stale: true };
+    if (failsafeStale(msg, now, opts.failsafe)) return { matched: FAILSAFE_RULE, stale: true };
+    return { matched: "invasion", stale: false };
   }
-  if (messageTimestamps(msg).length === 0) return { stale: false };
-  return { matched: "overdue-timestamp", stale: isOverdue(msg, now, opts.graceSeconds) };
+
+  if (messageTimestamps(msg).length > 0) {
+    if (isOverdue(msg, now, opts.graceSeconds)) return { matched: "overdue-timestamp", stale: true };
+    if (failsafeStale(msg, now, opts.failsafe)) return { matched: FAILSAFE_RULE, stale: true };
+    return { matched: "overdue-timestamp", stale: false };
+  }
+
+  if (failsafeStale(msg, now, opts.failsafe)) return { matched: FAILSAFE_RULE, stale: true };
+  return { stale: false };
 }

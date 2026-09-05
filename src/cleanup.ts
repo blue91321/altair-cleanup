@@ -12,6 +12,7 @@ import { fetchActiveInvasionNodes } from "./warframe.js";
 import { editedRecently } from "./timestamps.js";
 import { appendLog, toRecord, type DeletionRecord } from "./deletionlog.js";
 import { linkContinuations, type MessageSlot } from "./classifiers/continuation.js";
+import { parsePhrases, type FailsafeConfig } from "./classifiers/failsafe.js";
 
 export interface CleanupResult {
   scanned: number;
@@ -70,6 +71,11 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
   const recentEditGrace = Number(env.RECENT_EDIT_GRACE_SECONDS || "86400");
   const logLimit = Number(env.DELETION_LOG_LIMIT || "50");
   const continuationWindow = Number(env.CONTINUATION_WINDOW_SECONDS || "60");
+  // Last-resort rule for orphaned posts nothing else can date.
+  const failsafe: FailsafeConfig = {
+    phrases: parsePhrases(env.FAILSAFE_PHRASES),
+    minAgeSeconds: Number(env.FAILSAFE_MIN_AGE_SECONDS || "604800"),
+  };
   // Fetched once per run; null if the worldstate API is unreachable.
   const activeInvasionNodes = await fetchActiveInvasionNodes(env.WORLDSTATE_PLATFORM || "pc");
 
@@ -136,7 +142,7 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
           // is still live, so leave it alone.
           !editedRecently(msg, now, recentEditGrace);
         if (!candidate) return { msg, candidate: false, stale: false, rule: "" };
-        const { matched, stale } = decide(msg, now, { graceSeconds, activeInvasionNodes });
+        const { matched, stale } = decide(msg, now, { graceSeconds, activeInvasionNodes, failsafe });
         return { msg, candidate: true, stale, rule: matched ?? "unknown" };
       });
 

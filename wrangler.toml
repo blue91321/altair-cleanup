@@ -52,6 +52,14 @@ DELETION_LOG_LIMIT = "50"
 # part posted within this many seconds is deleted along with its parent.
 CONTINUATION_WINDOW_SECONDS = "60"
 
+# Failsafe for orphaned posts nothing else can date — chiefly trailing parts of
+# a split notification whose timed parent was already deleted. An Altair message
+# containing any of these comma-separated phrases is deleted once it is older
+# than FAILSAFE_MIN_AGE_SECONDS (604800 = 1 week). Messages still counting down
+# to a future time are never touched. Leave FAILSAFE_PHRASES empty to disable.
+FAILSAFE_PHRASES = "Sands of Inaros Blueprint"
+FAILSAFE_MIN_AGE_SECONDS = "604800"
+
 # Platform whose worldstate is checked for invasion completion (via
 # api.warframestat.us/<platform>/invasions). One of: pc, ps4, xb1, swi.
 WORLDSTATE_PLATFORM = "pc"
