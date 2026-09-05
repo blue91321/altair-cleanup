@@ -47,6 +47,11 @@ RECENT_EDIT_GRACE_SECONDS = "86400"
 # How many deleted-message records to keep per server for /log (newest first).
 DELETION_LOG_LIMIT = "50"
 
+# Altair splits long notifications (e.g. Baro's inventory) across consecutive
+# messages, where only the first carries the expiry timer. A following untimed
+# part posted within this many seconds is deleted along with its parent.
+CONTINUATION_WINDOW_SECONDS = "60"
+
 # Platform whose worldstate is checked for invasion completion (via
 # api.warframestat.us/<platform>/invasions). One of: pc, ps4, xb1, swi.
 WORLDSTATE_PLATFORM = "pc"

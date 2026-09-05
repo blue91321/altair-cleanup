@@ -1,4 +1,4 @@
-import type { Env } from "./types.js";
+import type { Env, DiscordMessage } from "./types.js";
 import { fetchChannelMessages, deleteMessage, DiscordHttpError, isChannelInaccessible } from "./discord.js";
 import { decide } from "./classifiers/index.js";
 import {
@@ -11,6 +11,7 @@ import { isAltairMessage, type AltairIdentity } from "./altair.js";
 import { fetchActiveInvasionNodes } from "./warframe.js";
 import { editedRecently } from "./timestamps.js";
 import { appendLog, toRecord, type DeletionRecord } from "./deletionlog.js";
+import { linkContinuations, type MessageSlot } from "./classifiers/continuation.js";
 
 export interface CleanupResult {
   scanned: number;
@@ -68,6 +69,7 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
   // Messages edited this recently are treated as live (Altair "Dynamic" posts).
   const recentEditGrace = Number(env.RECENT_EDIT_GRACE_SECONDS || "86400");
   const logLimit = Number(env.DELETION_LOG_LIMIT || "50");
+  const continuationWindow = Number(env.CONTINUATION_WINDOW_SECONDS || "60");
   // Fetched once per run; null if the worldstate API is unreachable.
   const activeInvasionNodes = await fetchActiveInvasionNodes(env.WORLDSTATE_PLATFORM || "pc");
 
@@ -123,21 +125,32 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
         authorsSeen.set(msg.author.id, tag);
       }
 
-      for (const msg of messages) {
-        if (!isAltairMessage(msg, altair)) continue; // only Altair's messages
-        if (msg.pinned) continue; // never touch pinned (e.g. Dynamic auto-updaters)
-        // An Altair "Dynamic" message keeps re-editing itself; a recent edit
-        // means it is still live, so leave it alone.
-        if (editedRecently(msg, now, recentEditGrace)) continue;
-        result.altairMessages++;
-
+      // Judge every message first, then link multi-part posts, then delete.
+      // Altair splits long notifications across consecutive messages where only
+      // the first carries the expiry timer, so the parts must be decided together.
+      const slots: MessageSlot[] = messages.map((msg: DiscordMessage) => {
+        const candidate =
+          isAltairMessage(msg, altair) && // only Altair's messages
+          !msg.pinned && // never touch pinned (e.g. Dynamic auto-updaters)
+          // A "Dynamic" message keeps re-editing itself; a recent edit means it
+          // is still live, so leave it alone.
+          !editedRecently(msg, now, recentEditGrace);
+        if (!candidate) return { msg, candidate: false, stale: false, rule: "" };
         const { matched, stale } = decide(msg, now, { graceSeconds, activeInvasionNodes });
-        if (!stale) continue;
+        return { msg, candidate: true, stale, rule: matched ?? "unknown" };
+      });
+
+      for (const slot of slots) if (slot.candidate) result.altairMessages++;
+
+      linkContinuations(slots, continuationWindow);
+
+      for (const slot of slots) {
+        if (!slot.candidate || !slot.stale) continue;
+        const { msg, rule } = slot;
         result.stale++;
 
-        const label = matched ?? "unknown";
         if (dryRun) {
-          result.details.push(`[dry-run] would delete ${channelId}/${msg.id} (${label})`);
+          result.details.push(`[dry-run] would delete ${channelId}/${msg.id} (${rule})`);
           continue;
         }
 
@@ -145,10 +158,10 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
         if (ok) {
           result.deleted++;
           // Record what the message said before it is gone for good.
-          logRecords.push(toRecord(msg, channelId, label, now));
-          result.details.push(`deleted ${channelId}/${msg.id} (${label})`);
+          logRecords.push(toRecord(msg, channelId, rule, now));
+          result.details.push(`deleted ${channelId}/${msg.id} (${rule})`);
         } else {
-          result.details.push(`FAILED to delete ${channelId}/${msg.id} (${label})`);
+          result.details.push(`FAILED to delete ${channelId}/${msg.id} (${rule})`);
         }
       }
 

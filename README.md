@@ -56,6 +56,14 @@ The first classifier that recognizes a message decides whether it's stale.
   the past. Covers sorties, alerts, Baro, fissures and similar.
 - Messages with no timestamp and no matching rule are **kept** (safe default).
 
+**Multi-part posts.** Altair splits long notifications (Baro's inventory, for
+example) across consecutive messages where only the **first** carries the expiry
+timer. The trailing parts have nothing datable in them, so they are linked to
+their parent and deleted with it — otherwise they would linger forever. A part
+qualifies only if it carries no timestamp of its own, isn't independently
+classifiable, and was posted within `CONTINUATION_WINDOW_SECONDS` (default 60)
+of the message it follows; any unrelated message breaks the chain.
+
 To support a new Altair message type, add a module under `src/classifiers/` and
 branch to it from `decide()` in `src/classifiers/index.ts` (ahead of the
 `overdue-timestamp` fallback).
