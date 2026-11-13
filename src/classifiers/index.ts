@@ -2,6 +2,7 @@ import type { DiscordMessage } from "../types.js";
 import { messageTimestamps, isOverdue } from "./overdueTimestamp.js";
 import { isInvasionMessage, invasionStale } from "./invasion.js";
 import { failsafeStale, FAILSAFE_RULE, type FailsafeConfig } from "./failsafe.js";
+import { baroStale, BARO_RULE } from "./baro.js";
 
 export interface Decision {
   /** Name of the rule that matched, for logging. */
@@ -22,6 +23,8 @@ export interface DecideOptions {
    * disable it.
    */
   failsafe?: FailsafeConfig;
+  /** Age after which an untimed Baro inventory listing is considered finished. */
+  baroMaxAgeSeconds: number;
 }
 
 /**
@@ -32,7 +35,10 @@ export interface DecideOptions {
  *     (verified against the worldstate API). Kept if the API is unavailable.
  *  2. Timestamped messages: stale once a Discord timestamp is at least
  *     `graceSeconds` in the past.
- *  3. Failsafe: a configured phrase in a sufficiently old message. Applies even
+ *  3. Baro inventory: a ducats/credits listing with no future countdown, older
+ *     than `baroMaxAgeSeconds`. Baro's listing is frequently posted untimed, so
+ *     nothing else can date it.
+ *  4. Failsafe: a configured phrase in a sufficiently old message. Applies even
  *     when the rules above decline, so orphaned untimed posts can be cleared.
  *
  * Anything else is kept. Per-message-type rules can be layered in here.
@@ -41,16 +47,19 @@ export function decide(msg: DiscordMessage, now: number, opts: DecideOptions): D
   if (isInvasionMessage(msg)) {
     if (opts.activeInvasionNodes === null) return { matched: "invasion", stale: false };
     if (invasionStale(msg, opts.activeInvasionNodes)) return { matched: "invasion", stale: true };
+    if (baroStale(msg, now, opts.baroMaxAgeSeconds)) return { matched: BARO_RULE, stale: true };
     if (failsafeStale(msg, now, opts.failsafe)) return { matched: FAILSAFE_RULE, stale: true };
     return { matched: "invasion", stale: false };
   }
 
   if (messageTimestamps(msg).length > 0) {
     if (isOverdue(msg, now, opts.graceSeconds)) return { matched: "overdue-timestamp", stale: true };
+    if (baroStale(msg, now, opts.baroMaxAgeSeconds)) return { matched: BARO_RULE, stale: true };
     if (failsafeStale(msg, now, opts.failsafe)) return { matched: FAILSAFE_RULE, stale: true };
     return { matched: "overdue-timestamp", stale: false };
   }
 
+  if (baroStale(msg, now, opts.baroMaxAgeSeconds)) return { matched: BARO_RULE, stale: true };
   if (failsafeStale(msg, now, opts.failsafe)) return { matched: FAILSAFE_RULE, stale: true };
   return { stale: false };
 }

@@ -55,6 +55,7 @@ export interface Env {
   CONTINUATION_WINDOW_SECONDS: string;
   FAILSAFE_PHRASES: string;
   FAILSAFE_MIN_AGE_SECONDS: string;
+  BARO_MAX_AGE_SECONDS: string;
   WORLDSTATE_PLATFORM: string;
   CLEANUP_CHANNEL_IDS: string;
   SCAN_LIMIT: string;

@@ -66,12 +66,12 @@ describe("invasionStale (active-based)", () => {
 
 describe("decide() invasion integration", () => {
   it("never deletes invasions when the worldstate API is unavailable", () => {
-    const d = decide(single, 0, { graceSeconds: 120, activeInvasionNodes: null });
+    const d = decide(single, 0, { graceSeconds: 120, activeInvasionNodes: null, baroMaxAgeSeconds: 259200 });
     expect(d.matched).toBe("invasion");
     expect(d.stale).toBe(false);
   });
   it("deletes when the referenced invasion is no longer active", () => {
-    const d = decide(single, 0, { graceSeconds: 120, activeInvasionNodes: [] });
+    const d = decide(single, 0, { graceSeconds: 120, activeInvasionNodes: [], baroMaxAgeSeconds: 259200 });
     expect(d.stale).toBe(true);
   });
 });
