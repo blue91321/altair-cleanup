@@ -60,6 +60,12 @@ CONTINUATION_WINDOW_SECONDS = "60"
 FAILSAFE_PHRASES = "Sands of Inaros Blueprint"
 FAILSAFE_MIN_AGE_SECONDS = "604800"
 
+# Baro Ki'Teer's inventory listing is frequently posted with NO countdown at all,
+# so nothing else can date it. Baro stays two days, so a ducats/credits listing
+# older than this (259200 = 3 days) is certainly finished. A listing still
+# counting down to a future time is never touched, whatever its age.
+BARO_MAX_AGE_SECONDS = "259200"
+
 # Platform whose worldstate is checked for invasion completion (via
 # api.warframestat.us/<platform>/invasions). One of: pc, ps4, xb1, swi.
 WORLDSTATE_PLATFORM = "pc"

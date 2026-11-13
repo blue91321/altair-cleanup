@@ -76,7 +76,13 @@ describe("failsafeStale", () => {
 });
 
 describe("decide() failsafe integration", () => {
-  const opts = { graceSeconds: 120, activeInvasionNodes: [] as string[], failsafe: CFG };
+  // baro rule disabled here so these assertions isolate the failsafe
+  const opts = {
+    graceSeconds: 120,
+    activeInvasionNodes: [] as string[],
+    failsafe: CFG,
+    baroMaxAgeSeconds: Number.MAX_SAFE_INTEGER,
+  };
 
   it("flags the untimed orphan that no other rule can date", () => {
     const d = decide(msg(WEEK + DAY, [baroLeftover()]), NOW, opts);
@@ -93,6 +99,7 @@ describe("decide() failsafe integration", () => {
     const d = decide(msg(WEEK + DAY, [baroLeftover()]), NOW, {
       graceSeconds: 120,
       activeInvasionNodes: [],
+      baroMaxAgeSeconds: Number.MAX_SAFE_INTEGER,
     });
     expect(d.matched).toBeUndefined();
     expect(d.stale).toBe(false);

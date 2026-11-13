@@ -64,6 +64,14 @@ qualifies only if it carries no timestamp of its own, isn't independently
 classifiable, and was posted within `CONTINUATION_WINDOW_SECONDS` (default 60)
 of the message it follows; any unrelated message breaks the chain.
 
+**Baro Ki'Teer.** Baro's inventory listing is frequently posted with **no
+countdown at all** (sometimes as a whole untimed message, sometimes as the
+trailing table of a split one), so no timestamp rule can date it. A listing is
+recognised structurally — an embed priced in both **ducats** and **credits** —
+and deleted once it is older than `BARO_MAX_AGE_SECONDS` (default 3 days; Baro
+stays two). A listing still counting down to a future time is never touched,
+whatever its age.
+
 **Failsafe.** Some posts carry nothing datable at all — chiefly the trailing part
 of a split notification whose timed parent was already deleted, which would
 otherwise linger forever. An Altair message containing any phrase in

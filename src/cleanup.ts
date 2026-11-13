@@ -76,6 +76,8 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
     phrases: parsePhrases(env.FAILSAFE_PHRASES),
     minAgeSeconds: Number(env.FAILSAFE_MIN_AGE_SECONDS || "604800"),
   };
+  // Baro's listing is often posted untimed; it is finished after this long.
+  const baroMaxAgeSeconds = Number(env.BARO_MAX_AGE_SECONDS || "259200");
   // Fetched once per run; null if the worldstate API is unreachable.
   const activeInvasionNodes = await fetchActiveInvasionNodes(env.WORLDSTATE_PLATFORM || "pc");
 
@@ -142,7 +144,7 @@ export async function runCleanup(env: Env, scope?: { guildId: string }): Promise
           // is still live, so leave it alone.
           !editedRecently(msg, now, recentEditGrace);
         if (!candidate) return { msg, candidate: false, stale: false, rule: "" };
-        const { matched, stale } = decide(msg, now, { graceSeconds, activeInvasionNodes, failsafe });
+        const { matched, stale } = decide(msg, now, { graceSeconds, activeInvasionNodes, failsafe, baroMaxAgeSeconds });
         return { msg, candidate: true, stale, rule: matched ?? "unknown" };
       });
 
